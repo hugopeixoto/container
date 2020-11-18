@@ -1,7 +1,7 @@
 name: Container release
 on:
   push:
-    branches: '**'
+    tags: '*.*.*'
 
 jobs:
   multi:
@@ -10,8 +10,18 @@ jobs:
       matrix:
         base: [debian, alpine]
     steps:
+      - name: Set hedgedoc version from tag name
+        run: echo "$GITHUB_REF" | sed -e 's~refs/heads/\(.*\)~HEDGEDOC_VERSION=\1~' >> GITHUB_ENV
+
       - name: Checkout
         uses: actions/checkout@v2
+
+      - uses:  hugopeixoto/ghaction-docker-meta@master
+        name: Docker meta
+        id: docker_meta
+        with:
+          images: quay.io/hugopeixoto/hedgedoc
+          suffix: ${{ matrix.base }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -32,9 +42,7 @@ jobs:
           context: .
           file: ./${{ matrix.base }}/Dockerfile
           build-args: |
-            VERSION=1.6.0
+            VERSION=${{ env.HEDGEDOC_VERSION }}
           platforms: linux/amd64
           push: true
-          tags: |
-            quay.io/hugopeixoto/hedgedoc:${{ matrix.base }}
-            quay.io/hugopeixoto/hedgedoc:1.6.0-${{ matrix.base }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
