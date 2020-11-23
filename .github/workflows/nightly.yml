@@ -1,0 +1,42 @@
+name: nightly
+on:
+  schedule:
+    - cron: "*/20 * * * *"
+    # - cron: "0 0 * * *"
+
+jobs:
+  nightly:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        base: [debian, alpine]
+    env:
+      HEDGEDOC_VERSION: master
+      HEDGEDOC_IMAGE: quay.io/hedgedoc/hedgedoc
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to docker registry
+        uses: docker/login-action@v1
+        with:
+          registry: quay.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ./${{ matrix.base }}/Dockerfile
+          build-args: |
+            VERSION=${{ env.HEDGEDOC_VERSION }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.HEDGEDOC_IMAGE }}:nightly-${{ matrix.base }}
