@@ -11,7 +11,7 @@ jobs:
         base: [debian, alpine]
     env:
       HEDGEDOC_VERSION: 1.6.0
-      HEDGEDOC_IMAGE: quay.io/hedgedoc/hedgedoc
+      HEDGEDOC_IMAGE: quay.io/hugopeixoto/hedgedoc
     steps:
       - name: Checkout
         uses: actions/checkout@v2

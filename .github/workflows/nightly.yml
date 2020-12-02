@@ -1,7 +1,8 @@
 name: nightly
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "*/5 * * * *"
+    #- cron: "0 0 * * *"
 
 jobs:
   nightly:
@@ -11,10 +12,13 @@ jobs:
         base: [debian, alpine]
     env:
       HEDGEDOC_VERSION: master
-      HEDGEDOC_IMAGE: quay.io/hedgedoc/hedgedoc
+      HEDGEDOC_IMAGE: quay.io/hugopeixoto/hedgedoc-nightly
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
+      - name: Set date
+        run: echo TODAY=$(date --date="5 day ago" +%Y%m%d) >> $GITHUB_ENV
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -34,8 +38,9 @@ jobs:
         with:
           context: .
           file: ./${{ matrix.base }}/Dockerfile
+          labels: quay.expires-after=1w
           build-args: |
             VERSION=${{ env.HEDGEDOC_VERSION }}
           platforms: linux/amd64
           push: true
-          tags: ${{ env.HEDGEDOC_IMAGE }}:nightly-${{ matrix.base }}
+          tags: ${{ env.HEDGEDOC_IMAGE }}:${{ env.TODAY }}-${{ matrix.base }}
